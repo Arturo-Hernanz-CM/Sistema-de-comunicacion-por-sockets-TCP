@@ -1,9 +1,13 @@
 #include "proxy-mq.h"
 #include <stdio.h> 
-#include <mqueue.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+
 
 // Variable global
 Peticion peticion = {0};
@@ -16,44 +20,42 @@ int tratar_peticion(Peticion * peticion) {
     char nombre_cola[256];
     int respuesta;
 
-    // Colas
-    mqd_t cola_cliente;
-    mqd_t cola_servidor;
-    struct mq_attr atributos_cola_c;
+    int socket_cliente;
+	struct sockaddr_in socket_servidor;	// socket del servidor
+	struct hostent *datos_servidor;	// datos del servidor
+	int32_t a, b, res;
+	int error;
     
-    // Cola del cliente
-    atributos_cola_c.mq_flags = 0;         
-    atributos_cola_c.mq_maxmsg = 10;
-    if(peticion->operacion == 2){
-        atributos_cola_c.mq_msgsize = sizeof(Peticion);
-    }
-    else{
-        atributos_cola_c.mq_msgsize = sizeof(respuesta);
-    }
-    sprintf(nombre_cola,  "/Cliente-100495850-%d", getpid());
-    strcpy(peticion->cola_cliente, nombre_cola);
+    // Socket del cliente
+	socket_cliente = socket(AF_INET, SOCK_STREAM, 0);
+	if (socket_cliente == 1) {
+		printf("Error en socket\n");
+		return -1;
+	}
 
-    cola_cliente = mq_open(nombre_cola, O_CREAT | O_RDONLY, 0666, &atributos_cola_c);
-    if (cola_cliente == -1) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al abrir la cola del cliente");
-        return -1;
-    }
+    // Socket del servidor
+	bzero((char *)&socket_servidor, sizeof(socket_servidor));
 
-    // Cola del servidor
-    cola_servidor = mq_open("/Servidor-100495850", O_WRONLY);
-    if (cola_servidor == -1) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al abrir la cola del servidor");
-        return -1;
-    }
+   	datos_servidor = gethostbyname (argv[1]);
+	if (datos_servidor == NULL) {
+		printf("Error en gethostbyname\n");
+		return -1;
+	}
+    
+    // conectar el socket del cliente con el servidor
+    error = connect(socket_cliente, (struct sockaddr *) &datos_servidor,  sizeof(socket_servidor));
+	if (error == -1) {
+		printf("Error en connect\n");
+		return -1;
+	}
 
-    // Escribir en la cola del servidor
+    // Enviar datos al servidor
     printf("Enviando peticion.\n");
-    if (mq_send(cola_servidor, (char *) peticion, sizeof(Peticion), 0) == -1) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: No se puede enviar la peticion");
-        mq_close(cola_servidor);
-        mq_unlink("/Servidor-100495850");
-        return -1;
-    }
+    error = sendMessage(socket_cliente, (char *) &op, sizeof(char));  // envía la operacion
+	if (err == -1){
+		printf("Error en envio\n");
+		return -1;
+	}
 
     // Recibir respuesta en la cola del cliente
     if (peticion->operacion == 2){
