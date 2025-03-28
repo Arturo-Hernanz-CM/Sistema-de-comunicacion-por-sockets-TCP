@@ -40,18 +40,6 @@ else{
 // Funciones
 
 int enviar_peticion(int socket_cliente, Peticion * peticion){
-    /*
-    Datos a enviar:
-        - int key
-        - int N_value2
-        - int operacion
-        - int value3.x
-        - int value3.y
-        - char value1[256]
-        - double value2[32]
-
-
-    */
    int32_t key_, N_value2_, operacion_, value3_x_, value3_y_;
    key_ = htonl(peticion->key);
    N_value2_ = htonl(peticion->N_value2);
@@ -108,6 +96,69 @@ int enviar_peticion(int socket_cliente, Peticion * peticion){
         return -1;
     }
 
+    return 0;
+}
+
+int recibir_get_value(int socket_cliente, Peticion * resp){
+    int32_t key_, N_value2_, operacion_, value3_x_, value3_y_;
+
+    // Recibir key
+    if(rcvMessage(socket_cliente, &key_, sizeof(key_), 0) == -1){
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir la key\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+    // Recibir N_value2
+    if(rcvMessage(socket_cliente, &N_value2_, sizeof(N_value2_), 0) == -1){
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir el N_value2\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+    // Recibir operacion
+    if(rcvMessage(socket_cliente, &operacion_, sizeof(operacion_), 0) == -1){
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir la operacion\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+    // Recibir value3.x
+    if(rcvMessage(socket_cliente, &value3_x_, sizeof(value3_x_), 0) == -1){
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir value3.x\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+    // Recibir value3.y
+    if(rcvMessage(socket_cliente, &value3_y_, sizeof(value3_y_), 0) == -1){
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir value3.y\n");
+        close(socket_cliente);
+        return -1;
+    }    
+
+    // Recibir value1
+    if(rcvMessage(socket_cliente, resp->value1, sizeof(resp->value1), 0) == -1){
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir value1\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+    // Recibir value2
+    if(rcvMessage(socket_cliente, &resp->value2, sizeof(resp->value2), 0) == -1){
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir value2\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+    // Asignacion de valores a la estructura
+    resp->key = ntohl(key_);
+    resp->N_value2 = ntohl(N_value2_);
+    resp->operacion = ntohl(operacion_);
+    resp->value3.x = ntohl(value3_x_);
+    resp->value3.y = ntohl(value3_y_);
+
+    return 0;
 }
 
 int tratar_peticion(Peticion * peticion) {
@@ -162,13 +213,11 @@ int tratar_peticion(Peticion * peticion) {
 
     // Recibir respuesta en la cola del cliente
     if (peticion->operacion == 2){      // Funcion get_value
-        /*
         Peticion resp;
         printf("Recibiendo respuesta del servidor.\n");
-        if(mq_receive(cola_cliente, (char *)&resp, sizeof(Peticion), 0) == -1) {
-            perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: No se puede recibir la respuesta");
-            mq_close(cola_cliente);
-            mq_unlink(nombre_cola);
+        if (recibir_get_value(socket_cliente, &resp) == -1){
+            perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al recibir la respuesta\n");
+            close(socket_cliente);
             return -1;
         }
         if (resp.N_value2 == -1){
@@ -181,17 +230,17 @@ int tratar_peticion(Peticion * peticion) {
         peticion->N_value2 = resp.N_value2;
         memcpy(&peticion->value2, &resp.value2, sizeof(double));
         peticion->value3 = resp.value3;
-        */
     }
-    else{   // Cyalquier otra funcion
+    else{   // Cualquier otra funcion
         printf("Recibiendo respuesta del servidor.\n");
-        if(recvMessage(socket_cliente, (char *) &respuesta, sizeof(int32_t)) == -1) {
+        if(recvMessage(socket_cliente, (char *) &res, sizeof(int32_t)) == -1) {
             perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: No se puede recibir la respuesta");
             mq_close(cola_cliente);
             mq_unlink(nombre_cola);
             return -1;
         }
-        if (ntohl(respuesta) == -1){
+        respuesta = ntohl(res);
+        if (respuesta == -1){
             perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error en la respuesta");
             mq_close(cola_cliente);
             mq_unlink(nombre_cola);
