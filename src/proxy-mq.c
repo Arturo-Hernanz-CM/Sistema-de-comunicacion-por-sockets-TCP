@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <netdb.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -11,8 +12,103 @@
 
 // Variable global
 Peticion peticion = {0};
+ip_servidor = getenv("IP_TUPLAS");
+puerto_servidor_char = getenv("PORT_TUPLAS");
+int puerto_servidor;
+
+// Comprobacion de las variables de entorno
+if (ip_servidor == NULL) {
+    perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al obtener la variable de entorno IP_TUPLAS \n");
+    return -1;
+}
+
+if (puerto_servidor_char == NULL) {
+    perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al obtener la variable de entorno PORT_TUPLAS \n");
+    return -1;
+}
+else{
+    puerto_servidor = atoi(puerto_servidor_char);
+    if(puerto_servidor == 0){
+        if strcmp(puerto_servidor_char, "0") != 0 {
+            perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al obtener el puerto del servidor\n");
+            return -1;
+        }
+    }
+}
+
 
 // Funciones
+
+int enviar_peticion(int socket_cliente, Peticion * peticion){
+    /*
+    Datos a enviar:
+        - int key
+        - int N_value2
+        - int operacion
+        - int value3.x
+        - int value3.y
+        - char value1[256]
+        - double value2[32]
+
+
+    */
+   int32_t key_, N_value2_, operacion_, value3_x_, value3_y_;
+   key_ = htonl(peticion->key);
+   N_value2_ = htonl(peticion->N_value2);
+   operacion_ = htonl(peticion->operacion);
+   value3_x_ = htonl(peticion->value3.x);
+   value3_y_ = htonl(peticion->value3.y);
+
+   // Enviar key
+   if (sendMessage(socket_cliente, &key_, sizeof(key_), 0) == -1) {
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar la clave\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+    // Enviar N_value2
+    if (sendMessage(socket_cliente, &N_value2_, sizeof(N_value2_), 0) == -1) {
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar el N_value2\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+    // Enviar operacion
+    if (sendMessage(socket_cliente, &operacion_, sizeof(operacion_), 0) == -1) {
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar la operacion\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+    // Enviar value3.x
+    if (sendMessage(socket_cliente, &value3_x_, sizeof(value3_x_), 0) == -1) {
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar value3.x\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+    // Enviar value3.y
+    if (sendMessage(socket_cliente, &value3_y_, sizeof(value3_y_), 0) == -1) {
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar value3.y\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+    // Enviar value1
+    if (sendMessage(socket_cliente, peticion->value1, sizeof(peticion->value1), 0) == -1) {
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar value1\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+    // Enviar value2
+    if (sendMessage(socket_cliente, &peticion->value2, sizeof(peticion->value2), 0) == -1) {
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar value2\n");
+        close(socket_cliente);
+        return -1;
+    }
+
+}
 
 int tratar_peticion(Peticion * peticion) {
 
@@ -28,37 +124,45 @@ int tratar_peticion(Peticion * peticion) {
     
     // Socket del cliente
 	socket_cliente = socket(AF_INET, SOCK_STREAM, 0);
-	if (socket_cliente == 1) {
-		printf("Error en socket\n");
-		return -1;
+	if (socket_cliente == -1) {
+		perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al crear el socket del cliente\n");
+		close(socket_cliente);
+        return -1;
 	}
 
     // Socket del servidor
 	bzero((char *)&socket_servidor, sizeof(socket_servidor));
-
-   	datos_servidor = gethostbyname (argv[1]);
+   	datos_servidor = gethostbyname (ip_servidor);
 	if (datos_servidor == NULL) {
-		printf("Error en gethostbyname\n");
-		return -1;
+		perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al obtener la informacion del servidor\n");
+		close(socket_cliente);
+        return -1;
 	}
+
+    // Guardar los datos del servidr en la estructura para usarlos en el socket
+    memcpy (&(socket_servidor.sin_addr), datos_servidor->h_addr, datos_servidor->h_length);
+    socket_servidor.sin_family  = AF_INET;
+    socket_servidor.sin_port    = htons(puerto_serv);
     
-    // conectar el socket del cliente con el servidor
-    error = connect(socket_cliente, (struct sockaddr *) &datos_servidor,  sizeof(socket_servidor));
+    // Conectar el socket del cliente con el servidor
+    error = connect(socket_cliente, (struct sockaddr *) &socket_servidor,  sizeof(socket_servidor));
 	if (error == -1) {
-		printf("Error en connect\n");
-		return -1;
+		perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al conectar el socket del cliente con el servidor\n");
+		close(socket_cliente);
+        return -1;
 	}
 
     // Enviar datos al servidor
     printf("Enviando peticion.\n");
-    error = sendMessage(socket_cliente, (char *) &op, sizeof(char));  // envía la operacion
-	if (err == -1){
-		printf("Error en envio\n");
-		return -1;
-	}
+    if (enviar_peticion(socket_cliente, peticion) == -1){
+        perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al enviar la peticion\n");
+        close(socket_cliente);
+        return -1;
+    }
 
     // Recibir respuesta en la cola del cliente
-    if (peticion->operacion == 2){
+    if (peticion->operacion == 2){      // Funcion get_value
+        /*
         Peticion resp;
         printf("Recibiendo respuesta del servidor.\n");
         if(mq_receive(cola_cliente, (char *)&resp, sizeof(Peticion), 0) == -1) {
@@ -77,27 +181,25 @@ int tratar_peticion(Peticion * peticion) {
         peticion->N_value2 = resp.N_value2;
         memcpy(&peticion->value2, &resp.value2, sizeof(double));
         peticion->value3 = resp.value3;
+        */
     }
-    else{
+    else{   // Cyalquier otra funcion
         printf("Recibiendo respuesta del servidor.\n");
-        if(mq_receive(cola_cliente, (char *)&respuesta, sizeof(respuesta), 0) == -1) {
+        if(recvMessage(socket_cliente, (char *) &respuesta, sizeof(int32_t)) == -1) {
             perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: No se puede recibir la respuesta");
             mq_close(cola_cliente);
             mq_unlink(nombre_cola);
             return -1;
         }
-        if (respuesta == -1){
+        if (ntohl(respuesta) == -1){
             perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error en la respuesta");
             mq_close(cola_cliente);
             mq_unlink(nombre_cola);
             return -1;
         }
     }
-    
-	mq_close(cola_servidor);
-	mq_close(cola_cliente);
-    mq_unlink(nombre_cola);
 
+    close(socket_cliente);
     return 0;
 }
 

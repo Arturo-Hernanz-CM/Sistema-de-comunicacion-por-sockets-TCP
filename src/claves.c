@@ -3,11 +3,14 @@
 #include <stdio.h> 
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 // Variable global
 extern Lista *base_datos;
+extern pthread_mutex_t mutex_funcion;
 
 int destroy(void){
+    pthread_mutex_lock(&mutex_funcion);
     if(base_datos != NULL){
         free(base_datos); 
         base_datos = NULL;
@@ -15,6 +18,7 @@ int destroy(void){
         base_datos = (Lista *) malloc(sizeof(Lista));
         if (base_datos == NULL) {
             perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al reservar memoria para la lista de claves");
+            pthread_mutex_unlock(&mutex_funcion);
             return -1;
         }
         base_datos->inicio = NULL;
@@ -22,18 +26,22 @@ int destroy(void){
         base_datos->size = 0;
     }
     printf("Lista destruida.\n");
+    pthread_mutex_unlock(&mutex_funcion);
     return 0;
 }
 
 int set_value(int key, char *value1, int N_value2, double *V_value2, struct Coord value3){
+    pthread_mutex_lock(&mutex_funcion);
     if(N_value2 < 1 || N_value2 > 32){
         perror("ERROR:\nFile: claves.c\nFunction: set_value\nError: El valor N_value2 debe estar entre 1 y 32");
+        pthread_mutex_unlock(&mutex_funcion);
         return -1;
     }
 
     Nodo *nodo = (Nodo *) malloc(sizeof(Nodo));
     if (nodo == NULL) {
         perror("ERROR:\nFile: claves.c\nFunction: set_value\nError: Error al reservar memoria para guardar un nodo");
+        pthread_mutex_unlock(&mutex_funcion);
         return -1;
     }
 
@@ -41,6 +49,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2, struct Coor
     nodo->value1 = (char*)malloc(strlen(value1)+1);
     if (nodo->value1 == NULL) {
         perror("ERROR:\nFile: claves.c\nFunction: set_value\nError: Error al reservar memoria para guardar el value1");
+        pthread_mutex_unlock(&mutex_funcion);
         return -1;
     }
     strcpy(nodo->value1, value1);
@@ -50,6 +59,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2, struct Coor
     nodo->value2 = (double*)malloc(N_value2*sizeof(double));
     if (nodo->value2 == NULL) {
         perror("ERROR:\nFile: claves.c\nFunction: set_value\nError: Error al reservar memoria para guardar el value2");
+        pthread_mutex_unlock(&mutex_funcion);
         return -1;
     }
     memcpy(&nodo->value2, V_value2, sizeof(double));
@@ -62,6 +72,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2, struct Coor
         base_datos = (Lista *) malloc(sizeof(Lista));
         if (base_datos == NULL) {
             perror("ERROR:\nFile: claves.c\nFunction: set_value\nError: Error al reservar memoria para la lista de claves");
+            pthread_mutex_unlock(&mutex_funcion);
             return -1;
         }
 
@@ -72,6 +83,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2, struct Coor
     else{
         if(exist(key) == 0){
             perror("ERROR:\nFile: claves.c\nFunction: set_value\nError: La clave ya existe en la base de datos");
+            pthread_mutex_unlock(&mutex_funcion);
             return -1;
         }
         nodo->siguiente = NULL;
@@ -81,12 +93,15 @@ int set_value(int key, char *value1, int N_value2, double *V_value2, struct Coor
         base_datos->size++;
     }
     printf("Mensaje guardado en la lista.\n");
+    pthread_mutex_unlock(&mutex_funcion);
     return 0;
 }
 
 int get_value(int key, char *value1, int *N_value2, double *V_value2, struct Coord *value3){
+    pthread_mutex_lock(&mutex_funcion);
     if (exist(key) == -1){
         perror("ERROR:\nFile: claves.c\nFunction: get_value\nError: La clave no existe");
+        pthread_mutex_unlock(&mutex_funcion);
         return -1;
     }
     else{
@@ -99,23 +114,28 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2, struct Coo
                 value3->x = nodo_actual->value3.x;
                 value3->y = nodo_actual->value3.y;
                 printf("Datos recuperados.\n");
+                pthread_mutex_unlock(&mutex_funcion);
                 return 0;
             }
             else{
                 nodo_actual = nodo_actual->siguiente;
             }
         }
+        pthread_mutex_unlock(&mutex_funcion);
         return -1;
     }
 }
 
 int modify_value(int key, char *value1, int N_value2, double *V_value2, struct Coord value3){
+    pthread_mutex_lock(&mutex_funcion);
     if (N_value2 < 1 || N_value2 > 32){
         perror("ERROR:\nFile: claves.c\nFunction: modify_value\nError: El valor N_value2 debe estar entre 1 y 32");
+        pthread_mutex_unlock(&mutex_funcion);
         return -1;
     }
     if (exist(key) == -1){
         perror("ERROR:\nFile: claves.c\nFunction: modify_value\nError: La clave no existe");
+        pthread_mutex_unlock(&mutex_funcion);
         return -1;
     }
     else{
@@ -124,6 +144,7 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2, struct C
             if(nodo_actual->key == key){
                 nodo_actual->value1 = (char*)malloc(strlen(value1)+1);
                 if (nodo_actual->value1 == NULL) {
+                    pthread_mutex_unlock(&mutex_funcion);
                     return -1;
                 }
                 else{
@@ -133,6 +154,7 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2, struct C
                 nodo_actual->value2 = V_value2;
                 nodo_actual->value3 = value3;
                 printf("Datos modificados.\n");
+                pthread_mutex_unlock(&mutex_funcion);
                 return 0;
             }
             else{
@@ -140,13 +162,15 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2, struct C
             }
         }
     }
-
+    pthread_mutex_unlock(&mutex_funcion);
     return 0;
 }
 
 int delete_key(int key){
+    pthread_mutex_lock(&mutex_funcion);
     if (exist(key) == -1){
         perror("ERROR:\nFile: claves.c\nFunction: delete_key\nError: La clave no existe");
+        pthread_mutex_unlock(&mutex_funcion);
         return -1;
     }
     else{
@@ -180,13 +204,16 @@ int delete_key(int key){
             }
         }
         printf("Datos asociados a la clave destruidos.\n");
+        pthread_mutex_unlock(&mutex_funcion);
         return 0;
     }
 }
 
 int exist(int key){
+    pthread_mutex_lock(&mutex_funcion);
     if (base_datos == NULL){
         perror("ERROR:\nFile: claves.c\nFunction: exist\nError: La lista esta vacia");
+        pthread_mutex_unlock(&mutex_funcion);
         return -1;
     }
     else{
@@ -194,6 +221,7 @@ int exist(int key){
         for(int indice = 0; indice < base_datos->size; indice++){
             if(nodo_actual->key == key){
                 printf("Clave encontrada.\n");
+                pthread_mutex_unlock(&mutex_funcion);
                 return 0;
             }
             else{
@@ -201,10 +229,12 @@ int exist(int key){
                     nodo_actual = nodo_actual->siguiente;
                 }
                 else{
+                    pthread_mutex_unlock(&mutex_funcion);
                     return -1;
                 }
             }
         }
+        pthread_mutex_unlock(&mutex_funcion);
         return -1;
     }
 }
