@@ -1,5 +1,5 @@
-#include "estructuras.h"
-#include "proxy-mq.h"
+#include "../estructuras.h"
+#include "../proxy-mq.h"
 #include <stdio.h> 
 #include <string.h>
 #include <stdlib.h>

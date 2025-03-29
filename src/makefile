@@ -6,14 +6,14 @@ CFLAGS = -Wall -g -fPIC -pthread -lrt
 
 # Archivos fuente
 SRCS_SERVER = servidor-mq.c claves.c
-SRCS_PROXY = proxy-mq.c
-SRCS_CLIENT0 = app-cliente-0.c
-SRCS_CLIENT1 = app-cliente-1.c
-SRCS_CLIENT6 = app-cliente-6.c
-SRCS_CLIENT2 = app-cliente-2.c
-SRCS_CLIENT3 = app-cliente-3.c
-SRCS_CLIENT4 = app-cliente-4.c
-SRCS_CLIENT5 = app-cliente-5.c
+SRCS_PROXY = proxy-mq.c lines.c
+SRCS_CLIENT0 = clientes/app-cliente-0.c
+SRCS_CLIENT1 = clientes/app-cliente-1.c
+SRCS_CLIENT6 = clientes/app-cliente-6.c
+SRCS_CLIENT2 = clientes/app-cliente-2.c
+SRCS_CLIENT3 = clientes/app-cliente-3.c
+SRCS_CLIENT4 = clientes/app-cliente-4.c
+SRCS_CLIENT5 = clientes/app-cliente-5.c
 
 # Archivos objeto
 OBJS_SERVER = $(SRCS_SERVER:.c=.o)

@@ -10,6 +10,6 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2, struct C
 int delete_key(int key);
 int exist(int key);
 int tratar_peticion(Peticion * peticion);
-int int enviar_peticion(int socket_cliente, Peticion * peticion);
+int enviar_peticion(int socket_cliente, Peticion * peticion);
 
 #endif
