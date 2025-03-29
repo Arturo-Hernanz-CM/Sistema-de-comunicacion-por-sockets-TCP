@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -Wall -g -fPIC -pthread -lrt
 
 # Archivos fuente
-SRCS_SERVER = servidor-mq.c claves.c
+SRCS_SERVER = servidor-mq.c claves.c lines.c
 SRCS_PROXY = proxy-mq.c lines.c
 SRCS_CLIENT0 = clientes/app-cliente-0.c
 SRCS_CLIENT1 = clientes/app-cliente-1.c

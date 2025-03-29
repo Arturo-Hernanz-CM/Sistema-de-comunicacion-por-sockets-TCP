@@ -1,36 +1,179 @@
 #include "claves.h"
 #include "estructuras.h"
 #include <stdio.h> 
-#include <mqueue.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include "lines.h"
 
 // Variables globales
+char *ip_servidor;
+char *puerto_servidor_char;
 Lista * base_datos = NULL;
-mqd_t  cola_servidor;
+
 pthread_mutex_t mutex_mensaje;
 pthread_cond_t condicion_mensaje;
 pthread_mutex_t mutex_funcion;
-int mensaje_copiado = 0;
+int ocupado = 0;
 
 
-void leer_cola(Peticion * peticion) {
-    if(peticion == NULL) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: leer_cola\nError: Peticion no valida");
-        return;
+// Recibir la peticion del cliente
+int recibir_peticion(int socket_cliente_descriptor, Peticion * peticion_local){
+    int32_t key_, N_value2_, operacion_, value3_x_, value3_y_;
+    char * value2_ = NULL;
+
+    value2_ = (char *) malloc(peticion_local->N_value2);
+    if (value2_ == NULL) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al reservar memoria para value2\n");
+        close(socket_cliente_descriptor);
+        return -1;
     }
-    mqd_t cola_cliente;
+
+    // Recibir key
+    if(recvMessage(socket_cliente_descriptor, (char *) &key_, sizeof(key_)) == -1){
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir la key\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+
+    // Recibir N_value2
+    if(recvMessage(socket_cliente_descriptor, (char *) &N_value2_, sizeof(N_value2_)) == -1){
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir el N_value2\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+
+    // Recibir operacion
+    if(recvMessage(socket_cliente_descriptor, (char *) &operacion_, sizeof(operacion_)) == -1){
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir la operacion\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+
+    // Recibir value3.x
+    if(recvMessage(socket_cliente_descriptor, (char *) &value3_x_, sizeof(value3_x_)) == -1){
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir value3.x\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+
+    // Recibir value3.y
+    if(recvMessage(socket_cliente_descriptor, (char *) &value3_y_, sizeof(value3_y_)) == -1){
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir value3.y\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }    
+
+    // Recibir value1
+    if(recvMessage(socket_cliente_descriptor, peticion_local->value1, sizeof(peticion_local->value1)) == -1){
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir value1\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+
+    // Recibir value2
+    if(recvMessage(socket_cliente_descriptor, value2_, sizeof(peticion_local->value2)) == -1){
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir value2\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+
+    // Asignacion de valores a la estructura
+    peticion_local->key = ntohl(key_);
+    peticion_local->N_value2 = ntohl(N_value2_);
+    peticion_local->operacion = ntohl(operacion_);
+    peticion_local->value3.x = ntohl(value3_x_);
+    peticion_local->value3.y = ntohl(value3_y_);
+    memcpy(peticion_local->value2, (double *) value2_, peticion_local->N_value2);
+
+    free(value2_);
+    return 0;
+}
+
+int enviar_respuesta_get_value(int socket_cliente_descriptor, Peticion * resp){
+    int32_t key_, N_value2_, operacion_, value3_x_, value3_y_;
+    key_ = htonl(resp->key);
+    N_value2_ = htonl(resp->N_value2);
+    operacion_ = htonl(resp->operacion);
+    value3_x_ = htonl(resp->value3.x);
+    value3_y_ = htonl(resp->value3.y);
+ 
+    // Enviar key
+    if (sendMessage(socket_cliente_descriptor, (char *) &key_, sizeof(key_)) == -1) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar la clave\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+ 
+    // Enviar N_value2
+    if (sendMessage(socket_cliente_descriptor, (char *) &N_value2_, sizeof(N_value2_)) == -1) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar el N_value2\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+ 
+    // Enviar operacion
+    if (sendMessage(socket_cliente_descriptor, (char *) &operacion_, sizeof(operacion_)) == -1) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar la operacion\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+ 
+     // Enviar value3.x
+    if (sendMessage(socket_cliente_descriptor, (char *) &value3_x_, sizeof(value3_x_)) == -1) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar value3.x\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+ 
+    // Enviar value3.y
+    if (sendMessage(socket_cliente_descriptor, (char *) &value3_y_, sizeof(value3_y_)) == -1) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar value3.y\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+ 
+    // Enviar value1
+    if (sendMessage(socket_cliente_descriptor, resp->value1, sizeof(resp->value1)) == -1) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar value1\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+ 
+    // Enviar value2
+    if (sendMessage(socket_cliente_descriptor, (char *) &resp->value2, sizeof(resp->value2)) == -1) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar value2\n");
+        close(socket_cliente_descriptor);
+        return -1;
+    }
+ 
+    return 0;  
+}
+
+void recibir_socket(int *socket_cliente_descriptor){
+    // Variables
+    int socket_cliente_descriptor_local;
     Peticion peticion_local = {0};
     Peticion resp = {0};
     int respuesta;
+    int32_t res;
 
-    // Copiar la petición a local
+    // Copiar el descriptor del socket del cliente
     pthread_mutex_lock(&mutex_mensaje);
-    memcpy(&peticion_local, peticion, sizeof(Peticion));
-    mensaje_copiado = 1;
+    socket_cliente_descriptor_local = (*(int *) socket_cliente_descriptor);
+    ocupado = 1;
     pthread_cond_signal(&condicion_mensaje);
     pthread_mutex_unlock(&mutex_mensaje);
+
+    // Recibe los datos del cliente
+    if (recibir_peticion(socket_cliente_descriptor_local, &peticion_local)){
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir la petición\n");
+        close(socket_cliente_descriptor_local);
+        respuesta = -1;
+    }
 
     // Ejecutar la petición
     if (peticion_local.operacion == 0) {    // Función destroy
@@ -57,37 +200,53 @@ void leer_cola(Peticion * peticion) {
     }
 
     // Enviar la respuesta
-    printf("Enviando respuesta a: %s\n", peticion_local.cola_cliente);
-    cola_cliente = mq_open(peticion_local.cola_cliente, O_WRONLY);
-    if (cola_cliente == -1) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: leer_cola\nError: No se puede abrir la cola del cliente");
-		mq_close(cola_cliente);
-		mq_unlink(peticion_local.cola_cliente);
-    }
-    else {
-        if(peticion_local.operacion == 2) {
-            if (respuesta == -1) {
-                resp = peticion_local;
-                resp.N_value2 = -1;
-            }
-            if (mq_send(cola_cliente, (char *)&resp, sizeof(Peticion), 0) == -1) {
-                perror("ERROR:\nFile: servidor-mq.c\nFunction: leer_cola\nError: No se puede enviar la respuesta");
-                mq_close(cola_servidor);
-                mq_unlink("/Servidor-100495850");
-            }  
+    printf("Enviando respuesta a IP: %d\n", socket_cliente_descriptor_local);
+    
+    res = htonl(respuesta);
+    if(peticion_local.operacion == 2) {
+        if (respuesta == -1) {
+            resp = peticion_local;
+            resp.N_value2 = -1;
         }
-        else{
-          if (mq_send(cola_cliente, (char *)&respuesta, sizeof(respuesta), 0) == -1) {
-                perror("ERROR:\nFile: servidor-mq.c\nFunction: leer_cola\nError: No se puede enviar la respuesta");
-                mq_close(cola_servidor);
-                mq_unlink("/Servidor-100495850");
-            }  
-        }
-        
+        if(enviar_respuesta_get_value(socket_cliente_descriptor_local, &resp) == -1) {
+            perror("ERROR:\nFile: servidor-mq.c\nFunction: leer_cola\nError: No se puede enviar la respuesta");
+            close(socket_cliente_descriptor_local);
+        }  
     }
+    else{
+        if(sendMessage(socket_cliente_descriptor_local, (char *) &res, sizeof(res)) == -1) {
+            perror("ERROR:\nFile: servidor-mq.c\nFunction: leer_cola\nError: No se puede enviar la respuesta");
+            close(socket_cliente_descriptor_local);
+        }  
+    }     
 }
 
 int main(void) {
+    // Variables de entorno
+    ip_servidor = getenv("IP_TUPLAS");
+    puerto_servidor_char = getenv("PORT_TUPLAS");
+    int puerto_servidor;
+
+    // Comprobacion de las variables de entorno
+    if (ip_servidor == NULL) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: tratar_peticion\nError: Error al obtener la variable de entorno IP_TUPLAS \n");
+        return -1;
+    }
+
+    if (puerto_servidor_char == NULL) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: tratar_peticion\nError: Error al obtener la variable de entorno PORT_TUPLAS \n");
+        return -1;
+    }
+    else{
+        puerto_servidor = atoi(puerto_servidor_char);
+        if(puerto_servidor == 0){
+            if (strcmp(puerto_servidor_char, "0") != 0) {
+                perror("ERROR:\nFile: servidor-mq.c\nFunction: tratar_peticion\nError: Error al obtener el puerto del servidor\n");
+                return -1;
+            }
+        }
+    }
+
     // Inicializar la lista de claves
     base_datos = (Lista *) malloc(sizeof(Lista));
     if (base_datos == NULL) {
@@ -99,52 +258,79 @@ int main(void) {
     base_datos->size = 0;
 
     // Inicializar estructuras
-    Peticion peticion;
-    struct mq_attr atributos_cola_s;
+    struct sockaddr_in socket_servidor,  socket_cliente;	// estructuras para info de los sockets
+
+    // Variables para los sockets
+    socklen_t size;
+    int socket_servidor_descriptor, socket_cliente_descriptor;
+    int val;
+    int err;
 
     // Inicializar hilos
     pthread_t thread;
     pthread_attr_t thread_att;
     pthread_attr_init(&thread_att);
 
-
     // Inicializar mutex
     pthread_mutex_init(&mutex_mensaje, NULL);
     pthread_cond_init(&condicion_mensaje, NULL);
     pthread_mutex_init(&mutex_funcion, NULL);
 
+    // Crear socket servidor
+	if ((socket_servidor_descriptor =  socket(AF_INET, SOCK_STREAM, 0))<0){
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al crear el socket del servidor");
+		return 0;
+	}
+	val = 1;
+	setsockopt(socket_servidor_descriptor, SOL_SOCKET, SO_REUSEADDR, (char *) &val, sizeof(int));
 
-    // Inicializar la cola del serviddor. 
-    //El servidor solo lee peticiones aquí, las respuestas en cada cola de cada cliente.
-    atributos_cola_s.mq_flags = 0;         
-    atributos_cola_s.mq_maxmsg = 10;
-    atributos_cola_s.mq_msgsize = sizeof(Peticion);
-    cola_servidor = mq_open("/Servidor-100495850", O_CREAT | O_RDONLY, 0777, &atributos_cola_s);
-    if (cola_servidor == -1) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al abrir la cola del servidor");
+	// Guardar la info del socket del servidor en la estructura
+	bzero((char *)&socket_servidor, sizeof(socket_servidor));
+	socket_servidor.sin_family      = AF_INET;
+	socket_servidor.sin_port        = htons(puerto_servidor);
+
+    if (inet_pton(AF_INET, ip_servidor, &socket_servidor.sin_addr) <= 0) {  // Asignar ip
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al asignar la ip del servidor");
         return -1;
     }
 
-    // Escribir en la cola
+	// Asignar los datos del servidor al socket del servidor
+	err = bind(socket_servidor_descriptor, (const struct sockaddr *)&socket_servidor, sizeof(socket_servidor));
+	if (err == -1) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al asignar los datos del servidor al socket del servidor");
+		return -1;
+	}
+
+    // Poner el socket del servidor en modo de escucha
+	err = listen(socket_servidor_descriptor, SOMAXCONN);
+	if (err == -1) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al poner el socket del servidor en modo de escucha");
+		return -1;
+	}
+
+    // Peticiones
 	pthread_attr_setdetachstate(&thread_att, PTHREAD_CREATE_DETACHED);      // threads independientes
     while(1) {
-        if (mq_receive(cola_servidor, (char *) &peticion, sizeof(Peticion), 0) < 0 ){
-			perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al recibir la peticion");
-			return -1;
-		}
+        // Aceptar la conexion
+        socket_cliente_descriptor = accept(socket_servidor_descriptor, (struct sockaddr *)&socket_cliente, &size);
+        if (socket_cliente_descriptor < 0) {
+            perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al aceptar la conexion");
+            return -1;
+        }
+
+        // Recibir peticion
         printf("\nRecibiendo peticion del cliente.\n");
-        if(pthread_create(&thread, &thread_att, (void*) leer_cola, &peticion) == 0) {
+        if(pthread_create(&thread, &thread_att, (void*) recibir_socket, &socket_cliente_descriptor) == 0) {
             pthread_mutex_lock(&mutex_mensaje);
-            while(mensaje_copiado == 0) {
+            while(ocupado == 0) {
                 pthread_cond_wait(&condicion_mensaje, &mutex_mensaje);
             }
-            mensaje_copiado = 0;
+            ocupado = 0;
             pthread_mutex_unlock(&mutex_mensaje);
         }
     }
 
-    // Se "cierra" la cola del servidor
-    mq_close(cola_servidor);
-    mq_unlink("/Servidor-100495850");
+    // Cerrar el socket
+    close(socket_servidor_descriptor);
     return 0;
 }
