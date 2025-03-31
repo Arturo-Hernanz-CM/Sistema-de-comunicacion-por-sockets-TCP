@@ -221,30 +221,11 @@ void recibir_socket(int *socket_cliente_descriptor){
     }     
 }
 
-int main(void) {
-    // Variables de entorno
-    ip_servidor = getenv("IP_TUPLAS");
-    puerto_servidor_char = getenv("PORT_TUPLAS");
-    int puerto_servidor;
-
-    // Comprobacion de las variables de entorno
-    if (ip_servidor == NULL) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: tratar_peticion\nError: Error al obtener la variable de entorno IP_TUPLAS \n");
+int main(char **argv, int argc) {
+    // Comprobacion de argumentos
+    if(argc != 2) {
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Número de argumentos incorrecto\n");
         return -1;
-    }
-
-    if (puerto_servidor_char == NULL) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: tratar_peticion\nError: Error al obtener la variable de entorno PORT_TUPLAS \n");
-        return -1;
-    }
-    else{
-        puerto_servidor = atoi(puerto_servidor_char);
-        if(puerto_servidor == 0){
-            if (strcmp(puerto_servidor_char, "0") != 0) {
-                perror("ERROR:\nFile: servidor-mq.c\nFunction: tratar_peticion\nError: Error al obtener el puerto del servidor\n");
-                return -1;
-            }
-        }
     }
 
     // Inicializar la lista de claves
@@ -265,6 +246,7 @@ int main(void) {
     int socket_servidor_descriptor, socket_cliente_descriptor;
     int val;
     int err;
+    int puerto_servidor;
 
     // Inicializar hilos
     pthread_t thread;
@@ -275,7 +257,7 @@ int main(void) {
     pthread_mutex_init(&mutex_mensaje, NULL);
     pthread_cond_init(&condicion_mensaje, NULL);
     pthread_mutex_init(&mutex_funcion, NULL);
-
+    
     // Crear socket servidor
 	if ((socket_servidor_descriptor =  socket(AF_INET, SOCK_STREAM, 0))<0){
         perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al crear el socket del servidor");
@@ -285,14 +267,18 @@ int main(void) {
 	setsockopt(socket_servidor_descriptor, SOL_SOCKET, SO_REUSEADDR, (char *) &val, sizeof(int));
 
 	// Guardar la info del socket del servidor en la estructura
+    puerto_servidor = atoi(argv[1]);
+    if(puerto_servidor == 0) {
+        if(strcmp(argv[1], "0") != 0) {
+            perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al obtener el puerto del servidor\n");
+            return -1;
+        }
+    }
+
 	bzero((char *)&socket_servidor, sizeof(socket_servidor));
 	socket_servidor.sin_family      = AF_INET;
+    socket_servidor.sin_addr.s_addr = INADDR_ANY;
 	socket_servidor.sin_port        = htons(puerto_servidor);
-
-    if (inet_pton(AF_INET, ip_servidor, &socket_servidor.sin_addr) <= 0) {  // Asignar ip
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al asignar la ip del servidor");
-        return -1;
-    }
 
 	// Asignar los datos del servidor al socket del servidor
 	err = bind(socket_servidor_descriptor, (const struct sockaddr *)&socket_servidor, sizeof(socket_servidor));
