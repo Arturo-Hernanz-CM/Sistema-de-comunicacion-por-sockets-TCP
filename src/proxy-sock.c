@@ -1,14 +1,14 @@
-#include "proxy-mq.h"
+#include "proxy-sock.h"
 #include "lines.h"
+#include <stdint.h>
 #include <stdio.h> 
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
 #include <sys/types.h>
+#include <arpa/inet.h>
 
 
 // Variable global
@@ -19,17 +19,41 @@ char *puerto_servidor_char;
 
 // Funciones
 
+// Serializar double
+uint64_t serializar_double(double value){
+    uint64_t v_value2;
+    memcpy(&v_value2, &value, sizeof(value));
+    return htobe64(v_value2);
+}
+
+// Deserializar double
+double deserializar_double(uint64_t v_value2){
+    uint64_t value2;
+    double result;
+
+    value2 = be64toh(v_value2);
+    memcpy(&result, &value2, sizeof(value2));
+    return result;
+}
+
+
 // Enviar peticion
 int enviar_peticion(int socket_cliente_descriptor, Peticion * peticion){
    int32_t key_, N_value2_, operacion_, value3_x_, value3_y_;
+   uint64_t v_value2_[32];
+
    key_ = htonl(peticion->key);
    N_value2_ = htonl(peticion->N_value2);
    operacion_ = htonl(peticion->operacion);
    value3_x_ = htonl(peticion->value3.x);
    value3_y_ = htonl(peticion->value3.y);
 
+    for (int i = 0; i < peticion->N_value2; i++) {
+        v_value2_[i] = serializar_double(peticion->value2[i]);
+    }
+
    // Enviar key
-   if (sendMessage(socket_cliente_descriptor, (char *) &key_, sizeof(key_)) == -1) {
+    if (sendMessage(socket_cliente_descriptor, (char *) &key_, sizeof(key_)) == -1) {
         perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar la clave\n");
         close(socket_cliente_descriptor);
         return -1;
@@ -71,7 +95,7 @@ int enviar_peticion(int socket_cliente_descriptor, Peticion * peticion){
     }
 
     // Enviar value2
-    if (sendMessage(socket_cliente_descriptor, (char *) &peticion->value2, sizeof(peticion->value2)) == -1) {
+    if (sendMessage(socket_cliente_descriptor, (char *) &v_value2_, sizeof(v_value2_)) == -1) {
         perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar value2\n");
         close(socket_cliente_descriptor);
         return -1;
@@ -83,14 +107,7 @@ int enviar_peticion(int socket_cliente_descriptor, Peticion * peticion){
 // Recibir respuesta get value
 int recibir_get_value(int socket_cliente_descriptor, Peticion * resp){
     int32_t key_, N_value2_, operacion_, value3_x_, value3_y_;
-    char * value2_ = NULL;
-
-    value2_ = (char *) malloc(resp->N_value2);
-    if (value2_ == NULL) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al reservar memoria para value2\n");
-        close(socket_cliente_descriptor);
-        return -1;
-    }
+    uint64_t v_value2_[32];
 
     // Recibir key
     if(recvMessage(socket_cliente_descriptor, (char *) &key_, sizeof(key_)) == -1){
@@ -135,7 +152,7 @@ int recibir_get_value(int socket_cliente_descriptor, Peticion * resp){
     }
 
     // Recibir value2
-    if(recvMessage(socket_cliente_descriptor, value2_, sizeof(resp->value2)) == -1){
+    if(recvMessage(socket_cliente_descriptor, (char*) &v_value2_, sizeof(v_value2_)) == -1){
         perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir value2\n");
         close(socket_cliente_descriptor);
         return -1;
@@ -147,12 +164,18 @@ int recibir_get_value(int socket_cliente_descriptor, Peticion * resp){
     resp->operacion = ntohl(operacion_);
     resp->value3.x = ntohl(value3_x_);
     resp->value3.y = ntohl(value3_y_);
-    memcpy(resp->value2, (double *) value2_, resp->N_value2);
+
+    for (int i = 0; i < resp->N_value2; i++) {
+        resp->value2[i] = deserializar_double(v_value2_[i]);
+    }
 
     return 0;
 }
 
 int tratar_peticion(Peticion * peticion) {
+    printf("peticion.value2[0]: %f\n", peticion->value2[0]);
+    printf("peticion.value2[1]: %f\n", peticion->value2[1]);
+
     // Variables de entorno
     ip_servidor = getenv("IP_TUPLAS");
     puerto_servidor_char = getenv("PORT_TUPLAS");
@@ -285,7 +308,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2, struct Coor
     peticion.key = key;
     strcpy(peticion.value1, value1);
     peticion.N_value2 = N_value2;
-    memcpy(&peticion.value2, V_value2, sizeof(double));
+    memcpy(&peticion.value2, V_value2, N_value2*sizeof(double));
     peticion.value3 = value3;
     peticion.operacion = 1;
 

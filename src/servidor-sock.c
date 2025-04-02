@@ -1,13 +1,15 @@
 #include "claves.h"
 #include "estructuras.h"
+#include "lines.h"
+#include <stdint.h>
 #include <stdio.h> 
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include "lines.h"
 
 // Variables globales
 char *ip_servidor;
@@ -19,18 +21,29 @@ pthread_cond_t condicion_mensaje;
 pthread_mutex_t mutex_funcion;
 int ocupado = 0;
 
+// Funciones
+
+// Serializar double
+uint64_t serializar_double(double value){
+    uint64_t v_value2;
+    memcpy(&v_value2, &value, sizeof(value));
+    return htobe64(v_value2);
+}
+
+// Deserializar double
+double deserializar_double(uint64_t v_value2){
+    uint64_t value2;
+    double result;
+
+    value2 = be64toh(v_value2);
+    memcpy(&result, &value2, sizeof(value2));
+    return result;
+}
 
 // Recibir la peticion del cliente
 int recibir_peticion(int socket_cliente_descriptor, Peticion * peticion_local){
     int32_t key_, N_value2_, operacion_, value3_x_, value3_y_;
-    char * value2_ = NULL;
-
-    value2_ = (char *) malloc(peticion_local->N_value2);
-    if (value2_ == NULL) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al reservar memoria para value2\n");
-        close(socket_cliente_descriptor);
-        return -1;
-    }
+    uint64_t v_value2_[32];
 
     // Recibir key
     if(recvMessage(socket_cliente_descriptor, (char *) &key_, sizeof(key_)) == -1){
@@ -75,7 +88,7 @@ int recibir_peticion(int socket_cliente_descriptor, Peticion * peticion_local){
     }
 
     // Recibir value2
-    if(recvMessage(socket_cliente_descriptor, value2_, sizeof(peticion_local->value2)) == -1){
+    if(sendMessage(socket_cliente_descriptor, (char *) &v_value2_, sizeof(v_value2_)) == -1){
         perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir value2\n");
         close(socket_cliente_descriptor);
         return -1;
@@ -87,19 +100,29 @@ int recibir_peticion(int socket_cliente_descriptor, Peticion * peticion_local){
     peticion_local->operacion = ntohl(operacion_);
     peticion_local->value3.x = ntohl(value3_x_);
     peticion_local->value3.y = ntohl(value3_y_);
-    memcpy(peticion_local->value2, (double *) value2_, peticion_local->N_value2);
 
-    free(value2_);
+    for (int i = 0; i < peticion_local->N_value2; i++) {
+        peticion_local->value2[i] = deserializar_double(v_value2_[i]);
+    }
+
+    printf("\n");
     return 0;
 }
 
+// Enviar la respuesta al cliente si la operacion es get_value
 int enviar_respuesta_get_value(int socket_cliente_descriptor, Peticion * resp){
     int32_t key_, N_value2_, operacion_, value3_x_, value3_y_;
+    uint64_t v_value2_[32];
+
     key_ = htonl(resp->key);
     N_value2_ = htonl(resp->N_value2);
     operacion_ = htonl(resp->operacion);
     value3_x_ = htonl(resp->value3.x);
     value3_y_ = htonl(resp->value3.y);
+
+    for (int i = 0; i < resp->N_value2; i++) {
+        v_value2_[i] = serializar_double(resp->value2[i]);
+    }
  
     // Enviar key
     if (sendMessage(socket_cliente_descriptor, (char *) &key_, sizeof(key_)) == -1) {
@@ -144,7 +167,7 @@ int enviar_respuesta_get_value(int socket_cliente_descriptor, Peticion * resp){
     }
  
     // Enviar value2
-    if (sendMessage(socket_cliente_descriptor, (char *) &resp->value2, sizeof(resp->value2)) == -1) {
+    if (sendMessage(socket_cliente_descriptor, (char *) &v_value2_, sizeof(v_value2_)) == -1) {
         perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar value2\n");
         close(socket_cliente_descriptor);
         return -1;
@@ -153,6 +176,7 @@ int enviar_respuesta_get_value(int socket_cliente_descriptor, Peticion * resp){
     return 0;  
 }
 
+// Funcion que recibe las peticiones
 void recibir_socket(int *socket_cliente_descriptor){
     // Variables
     int socket_cliente_descriptor_local;
@@ -170,7 +194,7 @@ void recibir_socket(int *socket_cliente_descriptor){
 
     // Recibe los datos del cliente
     if (recibir_peticion(socket_cliente_descriptor_local, &peticion_local)){
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir la petición\n");
+        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_socket\nError: Error al recibir la petición\n");
         close(socket_cliente_descriptor_local);
         respuesta = -1;
     }
@@ -209,19 +233,19 @@ void recibir_socket(int *socket_cliente_descriptor){
             resp.N_value2 = -1;
         }
         if(enviar_respuesta_get_value(socket_cliente_descriptor_local, &resp) == -1) {
-            perror("ERROR:\nFile: servidor-mq.c\nFunction: leer_cola\nError: No se puede enviar la respuesta");
+            perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_socket\nError: No se puede enviar la respuesta");
             close(socket_cliente_descriptor_local);
         }  
     }
     else{
         if(sendMessage(socket_cliente_descriptor_local, (char *) &res, sizeof(res)) == -1) {
-            perror("ERROR:\nFile: servidor-mq.c\nFunction: leer_cola\nError: No se puede enviar la respuesta");
+            perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_socket\nError: No se puede enviar la respuesta");
             close(socket_cliente_descriptor_local);
         }  
     }     
 }
 
-int main(char **argv, int argc) {
+int main(int argc, char **argv) {
     // Comprobacion de argumentos
     if(argc != 2) {
         perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Número de argumentos incorrecto\n");
