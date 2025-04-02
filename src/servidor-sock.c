@@ -88,7 +88,7 @@ int recibir_peticion(int socket_cliente_descriptor, Peticion * peticion_local){
     }
 
     // Recibir value2
-    if(sendMessage(socket_cliente_descriptor, (char *) &v_value2_, sizeof(v_value2_)) == -1){
+    if(recvMessage(socket_cliente_descriptor, (char *) &v_value2_, sizeof(v_value2_)) == -1){
         perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir value2\n");
         close(socket_cliente_descriptor);
         return -1;
@@ -105,7 +105,6 @@ int recibir_peticion(int socket_cliente_descriptor, Peticion * peticion_local){
         peticion_local->value2[i] = deserializar_double(v_value2_[i]);
     }
 
-    printf("\n");
     return 0;
 }
 
@@ -252,7 +251,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // Inicializar la lista de claves
+    // Inicializar la base de datos
     base_datos = (Lista *) malloc(sizeof(Lista));
     if (base_datos == NULL) {
         perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al reservar memoria para la lista de claves");
@@ -323,6 +322,7 @@ int main(int argc, char **argv) {
     while(1) {
         // Aceptar la conexion
         socket_cliente_descriptor = accept(socket_servidor_descriptor, (struct sockaddr *)&socket_cliente, &size);
+        printf("socket_cliente_descriptor: %d\n", socket_cliente_descriptor);
         if (socket_cliente_descriptor < 0) {
             perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al aceptar la conexion");
             return -1;

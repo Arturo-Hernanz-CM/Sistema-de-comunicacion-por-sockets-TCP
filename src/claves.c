@@ -62,7 +62,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2, struct Coor
         pthread_mutex_unlock(&mutex_funcion);
         return -1;
     }
-    memcpy(&nodo->value2, V_value2, sizeof(double));
+    memcpy(&nodo->value2, V_value2, N_value2*sizeof(double));
     nodo->value3 = value3;
 
     if (base_datos->size == 0){ // lista vacia
@@ -81,7 +81,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2, struct Coor
         base_datos->size = 1;
     }
     else{
-        if(exist(key) == 0){
+        if(exist(key) == -1){
             perror("ERROR:\nFile: claves.c\nFunction: set_value\nError: La clave ya existe en la base de datos");
             pthread_mutex_unlock(&mutex_funcion);
             return -1;

@@ -173,8 +173,6 @@ int recibir_get_value(int socket_cliente_descriptor, Peticion * resp){
 }
 
 int tratar_peticion(Peticion * peticion) {
-    printf("peticion.value2[0]: %f\n", peticion->value2[0]);
-    printf("peticion.value2[1]: %f\n", peticion->value2[1]);
 
     // Variables de entorno
     ip_servidor = getenv("IP_TUPLAS");
