@@ -41,7 +41,6 @@ int main (int argc, char **argv){
   // Envio de peticion
   int mensaje = get_value(key, value1, N_value2, value2, value3);
 
-  printf("%s\n", value1);
   free(value1);
   free(N_value2);
   free(value2);

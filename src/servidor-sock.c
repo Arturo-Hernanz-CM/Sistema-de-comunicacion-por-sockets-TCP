@@ -47,49 +47,49 @@ int recibir_peticion(int socket_cliente_descriptor, Peticion * peticion_local){
 
     // Recibir key
     if(recvMessage(socket_cliente_descriptor, (char *) &key_, sizeof(key_)) == -1){
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir la key\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: recibir_peticion\nError: Error al recibir la key\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Recibir N_value2
     if(recvMessage(socket_cliente_descriptor, (char *) &N_value2_, sizeof(N_value2_)) == -1){
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir el N_value2\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: recibir_peticion\nError: Error al recibir el N_value2\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Recibir operacion
     if(recvMessage(socket_cliente_descriptor, (char *) &operacion_, sizeof(operacion_)) == -1){
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir la operacion\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: recibir_peticion\nError: Error al recibir la operacion\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Recibir value3.x
     if(recvMessage(socket_cliente_descriptor, (char *) &value3_x_, sizeof(value3_x_)) == -1){
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir value3.x\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: recibir_peticion\nError: Error al recibir value3.x\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Recibir value3.y
     if(recvMessage(socket_cliente_descriptor, (char *) &value3_y_, sizeof(value3_y_)) == -1){
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir value3.y\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: recibir_peticion\nError: Error al recibir value3.y\n");
         close(socket_cliente_descriptor);
         return -1;
     }    
 
     // Recibir value1
     if(recvMessage(socket_cliente_descriptor, peticion_local->value1, sizeof(peticion_local->value1)) == -1){
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir value1\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: recibir_peticion\nError: Error al recibir value1\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Recibir value2
     if(recvMessage(socket_cliente_descriptor, (char *) &v_value2_, sizeof(v_value2_)) == -1){
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_peticion\nError: Error al recibir value2\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: recibir_peticion\nError: Error al recibir value2\n");
         close(socket_cliente_descriptor);
         return -1;
     }
@@ -125,49 +125,49 @@ int enviar_respuesta_get_value(int socket_cliente_descriptor, Peticion * resp){
  
     // Enviar key
     if (sendMessage(socket_cliente_descriptor, (char *) &key_, sizeof(key_)) == -1) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar la clave\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: enviar_rep_get_value\nError: Error al enviar la clave\n");
         close(socket_cliente_descriptor);
         return -1;
     }
  
     // Enviar N_value2
     if (sendMessage(socket_cliente_descriptor, (char *) &N_value2_, sizeof(N_value2_)) == -1) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar el N_value2\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: enviar_rep_get_value\nError: Error al enviar el N_value2\n");
         close(socket_cliente_descriptor);
         return -1;
     }
  
     // Enviar operacion
     if (sendMessage(socket_cliente_descriptor, (char *) &operacion_, sizeof(operacion_)) == -1) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar la operacion\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: enviar_rep_get_value\nError: Error al enviar la operacion\n");
         close(socket_cliente_descriptor);
         return -1;
     }
  
      // Enviar value3.x
     if (sendMessage(socket_cliente_descriptor, (char *) &value3_x_, sizeof(value3_x_)) == -1) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar value3.x\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: enviar_rep_get_value\nError: Error al enviar value3.x\n");
         close(socket_cliente_descriptor);
         return -1;
     }
  
     // Enviar value3.y
     if (sendMessage(socket_cliente_descriptor, (char *) &value3_y_, sizeof(value3_y_)) == -1) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar value3.y\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: enviar_rep_get_value\nError: Error al enviar value3.y\n");
         close(socket_cliente_descriptor);
         return -1;
     }
  
     // Enviar value1
     if (sendMessage(socket_cliente_descriptor, resp->value1, sizeof(resp->value1)) == -1) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar value1\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: enviar_rep_get_value\nError: Error al enviar value1\n");
         close(socket_cliente_descriptor);
         return -1;
     }
  
     // Enviar value2
     if (sendMessage(socket_cliente_descriptor, (char *) &v_value2_, sizeof(v_value2_)) == -1) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: enviar_rep_get_value\nError: Error al enviar value2\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: enviar_rep_get_value\nError: Error al enviar value2\n");
         close(socket_cliente_descriptor);
         return -1;
     }
@@ -193,7 +193,7 @@ void recibir_socket(int *socket_cliente_descriptor){
 
     // Recibe los datos del cliente
     if (recibir_peticion(socket_cliente_descriptor_local, &peticion_local)){
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_socket\nError: Error al recibir la petición\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: recibir_socket\nError: Error al recibir la petición\n");
         close(socket_cliente_descriptor_local);
         respuesta = -1;
     }
@@ -223,7 +223,7 @@ void recibir_socket(int *socket_cliente_descriptor){
     }
 
     // Enviar la respuesta
-    printf("Enviando respuesta a IP: %d\n", socket_cliente_descriptor_local);
+    printf("Enviando respuesta a cliente: %d\n", socket_cliente_descriptor_local);
     
     res = htonl(respuesta);
     if(peticion_local.operacion == 2) {
@@ -232,13 +232,13 @@ void recibir_socket(int *socket_cliente_descriptor){
             resp.N_value2 = -1;
         }
         if(enviar_respuesta_get_value(socket_cliente_descriptor_local, &resp) == -1) {
-            perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_socket\nError: No se puede enviar la respuesta");
+            perror("ERROR:\nFile: servidor-sock.c\nFunction: recibir_socket\nError: No se puede enviar la respuesta");
             close(socket_cliente_descriptor_local);
         }  
     }
     else{
         if(sendMessage(socket_cliente_descriptor_local, (char *) &res, sizeof(res)) == -1) {
-            perror("ERROR:\nFile: servidor-mq.c\nFunction: recibir_socket\nError: No se puede enviar la respuesta");
+            perror("ERROR:\nFile: servidor-sock.c\nFunction: recibir_socket\nError: No se puede enviar la respuesta");
             close(socket_cliente_descriptor_local);
         }  
     }     
@@ -247,14 +247,14 @@ void recibir_socket(int *socket_cliente_descriptor){
 int main(int argc, char **argv) {
     // Comprobacion de argumentos
     if(argc != 2) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Número de argumentos incorrecto\n");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: main\nError: Número de argumentos incorrecto\n");
         return -1;
     }
 
     // Inicializar la base de datos
     base_datos = (Lista *) malloc(sizeof(Lista));
     if (base_datos == NULL) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al reservar memoria para la lista de claves");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: main\nError: Error al reservar memoria para la lista de claves");
         return -1;
     }
     base_datos->inicio = NULL;
@@ -283,7 +283,7 @@ int main(int argc, char **argv) {
     
     // Crear socket servidor
 	if ((socket_servidor_descriptor =  socket(AF_INET, SOCK_STREAM, 0))<0){
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al crear el socket del servidor");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: main\nError: Error al crear el socket del servidor");
 		return 0;
 	}
 	val = 1;
@@ -293,7 +293,7 @@ int main(int argc, char **argv) {
     puerto_servidor = atoi(argv[1]);
     if(puerto_servidor == 0) {
         if(strcmp(argv[1], "0") != 0) {
-            perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al obtener el puerto del servidor\n");
+            perror("ERROR:\nFile: servidor-sock.c\nFunction: main\nError: Error al obtener el puerto del servidor\n");
             return -1;
         }
     }
@@ -306,14 +306,14 @@ int main(int argc, char **argv) {
 	// Asignar los datos del servidor al socket del servidor
 	err = bind(socket_servidor_descriptor, (const struct sockaddr *)&socket_servidor, sizeof(socket_servidor));
 	if (err == -1) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al asignar los datos del servidor al socket del servidor");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: main\nError: Error al asignar los datos del servidor al socket del servidor");
 		return -1;
 	}
 
     // Poner el socket del servidor en modo de escucha
 	err = listen(socket_servidor_descriptor, SOMAXCONN);
 	if (err == -1) {
-        perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al poner el socket del servidor en modo de escucha");
+        perror("ERROR:\nFile: servidor-sock.c\nFunction: main\nError: Error al poner el socket del servidor en modo de escucha");
 		return -1;
 	}
 
@@ -322,9 +322,8 @@ int main(int argc, char **argv) {
     while(1) {
         // Aceptar la conexion
         socket_cliente_descriptor = accept(socket_servidor_descriptor, (struct sockaddr *)&socket_cliente, &size);
-        printf("socket_cliente_descriptor: %d\n", socket_cliente_descriptor);
         if (socket_cliente_descriptor < 0) {
-            perror("ERROR:\nFile: servidor-mq.c\nFunction: main\nError: Error al aceptar la conexion");
+            perror("ERROR:\nFile: servidor-sock.c\nFunction: main\nError: Error al aceptar la conexion");
             return -1;
         }
 

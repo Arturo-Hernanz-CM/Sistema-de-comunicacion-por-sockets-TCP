@@ -54,49 +54,49 @@ int enviar_peticion(int socket_cliente_descriptor, Peticion * peticion){
 
    // Enviar key
     if (sendMessage(socket_cliente_descriptor, (char *) &key_, sizeof(key_)) == -1) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar la clave\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: enviar_peticion\nError: Error al enviar la clave\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Enviar N_value2
     if (sendMessage(socket_cliente_descriptor, (char *) &N_value2_, sizeof(N_value2_)) == -1) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar el N_value2\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: enviar_peticion\nError: Error al enviar el N_value2\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Enviar operacion
     if (sendMessage(socket_cliente_descriptor, (char *) &operacion_, sizeof(operacion_)) == -1) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar la operacion\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: enviar_peticion\nError: Error al enviar la operacion\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Enviar value3.x
     if (sendMessage(socket_cliente_descriptor, (char *) &value3_x_, sizeof(value3_x_)) == -1) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar value3.x\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: enviar_peticion\nError: Error al enviar value3.x\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Enviar value3.y
     if (sendMessage(socket_cliente_descriptor, (char *) &value3_y_, sizeof(value3_y_)) == -1) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar value3.y\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: enviar_peticion\nError: Error al enviar value3.y\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Enviar value1
     if (sendMessage(socket_cliente_descriptor, peticion->value1, sizeof(peticion->value1)) == -1) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar value1\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: enviar_peticion\nError: Error al enviar value1\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Enviar value2
     if (sendMessage(socket_cliente_descriptor, (char *) &v_value2_, sizeof(v_value2_)) == -1) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: enviar_peticion\nError: Error al enviar value2\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: enviar_peticion\nError: Error al enviar value2\n");
         close(socket_cliente_descriptor);
         return -1;
     }
@@ -111,49 +111,49 @@ int recibir_get_value(int socket_cliente_descriptor, Peticion * resp){
 
     // Recibir key
     if(recvMessage(socket_cliente_descriptor, (char *) &key_, sizeof(key_)) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir la key\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: recibir_get_value\nError: Error al recibir la key\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Recibir N_value2
     if(recvMessage(socket_cliente_descriptor, (char *) &N_value2_, sizeof(N_value2_)) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir el N_value2\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: recibir_get_value\nError: Error al recibir el N_value2\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Recibir operacion
     if(recvMessage(socket_cliente_descriptor, (char *) &operacion_, sizeof(operacion_)) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir la operacion\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: recibir_get_value\nError: Error al recibir la operacion\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Recibir value3.x
     if(recvMessage(socket_cliente_descriptor, (char *) &value3_x_, sizeof(value3_x_)) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir value3.x\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: recibir_get_value\nError: Error al recibir value3.x\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Recibir value3.y
     if(recvMessage(socket_cliente_descriptor, (char *) &value3_y_, sizeof(value3_y_)) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir value3.y\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: recibir_get_value\nError: Error al recibir value3.y\n");
         close(socket_cliente_descriptor);
         return -1;
     }    
 
     // Recibir value1
     if(recvMessage(socket_cliente_descriptor, resp->value1, sizeof(resp->value1)) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir value1\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: recibir_get_value\nError: Error al recibir value1\n");
         close(socket_cliente_descriptor);
         return -1;
     }
 
     // Recibir value2
     if(recvMessage(socket_cliente_descriptor, (char*) &v_value2_, sizeof(v_value2_)) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: recibir_get_value\nError: Error al recibir value2\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: recibir_get_value\nError: Error al recibir value2\n");
         close(socket_cliente_descriptor);
         return -1;
     }
@@ -181,19 +181,19 @@ int tratar_peticion(Peticion * peticion) {
     
     // Comprobacion de las variables de entorno
     if (ip_servidor == NULL) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al obtener la variable de entorno IP_TUPLAS \n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: tratar_peticion\nError: Error al obtener la variable de entorno IP_TUPLAS \n");
         return -1;
     }
     
     if (puerto_servidor_char == NULL) {
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al obtener la variable de entorno PORT_TUPLAS \n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: tratar_peticion\nError: Error al obtener la variable de entorno PORT_TUPLAS \n");
         return -1;
     }
     else{
         puerto_servidor = atoi(puerto_servidor_char);
         if(puerto_servidor == 0){
             if (strcmp(puerto_servidor_char, "0") != 0) {
-                perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al obtener el puerto del servidor\n");
+                perror("ERROR:\nFile: proxy-sock.c\nFunction: tratar_peticion\nError: Error al obtener el puerto del servidor\n");
                 return -1;
             }
         }
@@ -210,7 +210,7 @@ int tratar_peticion(Peticion * peticion) {
     // Socket del cliente
 	socket_cliente_descriptor = socket(AF_INET, SOCK_STREAM, 0);
 	if (socket_cliente_descriptor == -1) {
-		perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al crear el socket del cliente\n");
+		perror("ERROR:\nFile: proxy-sock.c\nFunction: tratar_peticion\nError: Error al crear el socket del cliente\n");
         return -1;
 	}
 
@@ -218,7 +218,7 @@ int tratar_peticion(Peticion * peticion) {
 	bzero((char *)&socket_servidor, sizeof(socket_servidor));
    	datos_servidor = gethostbyname(ip_servidor);
 	if (datos_servidor == NULL) {
-		perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al obtener la informacion del servidor\n");
+		perror("ERROR:\nFile: proxy-sock.c\nFunction: tratar_peticion\nError: Error al obtener la informacion del servidor\n");
 		close(socket_cliente_descriptor);
         return -1;
 	}
@@ -231,7 +231,7 @@ int tratar_peticion(Peticion * peticion) {
     // Conectar el socket del cliente con el servidor
     error = connect(socket_cliente_descriptor, (struct sockaddr *) &socket_servidor,  sizeof(socket_servidor));
 	if (error == -1) {
-		perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al conectar el socket del cliente con el servidor\n");
+		perror("ERROR:\nFile: proxy-sock.c\nFunction: tratar_peticion\nError: Error al conectar el socket del cliente con el servidor\n");
 		close(socket_cliente_descriptor);
         return -1;
 	}
@@ -239,7 +239,7 @@ int tratar_peticion(Peticion * peticion) {
     // Enviar datos al servidor
     printf("Enviando peticion.\n");
     if (enviar_peticion(socket_cliente_descriptor, peticion) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al enviar la peticion\n");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: tratar_peticion\nError: Error al enviar la peticion\n");
         close(socket_cliente_descriptor);
         return -1;
     }
@@ -249,30 +249,30 @@ int tratar_peticion(Peticion * peticion) {
         Peticion resp;
         printf("Recibiendo respuesta del servidor.\n");
         if (recibir_get_value(socket_cliente_descriptor, &resp) == -1){
-            perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error al recibir la respuesta\n");
+            perror("ERROR:\nFile: proxy-sock.c\nFunction: tratar_peticion\nError: Error al recibir la respuesta\n");
             close(socket_cliente_descriptor);
             return -1;
         }
         if (resp.N_value2 == -1){
-            perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error en la respuesta");
+            perror("ERROR:\nFile: proxy-sock.c\nFunction: tratar_peticion\nError: Error en la respuesta");
             close(socket_cliente_descriptor);
             return -1;
         }
         strcpy(peticion->value1, resp.value1);
         peticion->N_value2 = resp.N_value2;
-        memcpy(&peticion->value2, &resp.value2, sizeof(double));
+        memcpy(&peticion->value2, &resp.value2, (peticion->N_value2)*sizeof(double));
         peticion->value3 = resp.value3;
     }
     else{   // Cualquier otra funcion
         printf("Recibiendo respuesta del servidor.\n");
         if(recvMessage(socket_cliente_descriptor, (char *) &res, sizeof(int32_t)) == -1) {
-            perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: No se puede recibir la respuesta");
+            perror("ERROR:\nFile: proxy-sock.c\nFunction: tratar_peticion\nError: No se puede recibir la respuesta");
             close(socket_cliente_descriptor);
             return -1;
         }
         respuesta = ntohl(res);
         if (respuesta == -1){
-            perror("ERROR:\nFile: proxy-mq.c\nFunction: tratar_peticion\nError: Error en la respuesta");
+            perror("ERROR:\nFile: proxy-sock.c\nFunction: tratar_peticion\nError: Error en la respuesta");
             close(socket_cliente_descriptor);
             return -1;
         }
@@ -294,7 +294,7 @@ int destroy(void){
     peticion.operacion = 0;
 
     if (tratar_peticion(&peticion) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: destroy\nError: Error al destruir");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: destroy\nError: Error al destruir");
         return -1;
     }
 
@@ -311,7 +311,7 @@ int set_value(int key, char *value1, int N_value2, double *V_value2, struct Coor
     peticion.operacion = 1;
 
     if (tratar_peticion(&peticion) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: set_value\nError: Error al hacer set");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: set_value\nError: Error al hacer set");
         return -1;
     }
 
@@ -328,21 +328,24 @@ int get_value(int key, char *value1, int *N_value2, double *V_value2, struct Coo
     peticion.operacion = 2;
     
     if (tratar_peticion(&peticion) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: get_value\nError: Error al hacer get");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: get_value\nError: Error al hacer get");
         return -1;
     }
 
     // Escribir la respuesta en los valores que se pasan como argumentos
     strcpy(value1, peticion.value1);
     *N_value2 = peticion.N_value2;
-    memcpy(V_value2, &peticion.value2, sizeof(double));
+    memcpy(V_value2, &peticion.value2, (*N_value2)*sizeof(double));
     *value3 = peticion.value3;
 
-    printf("Datos de la clave %d recuperados:\n", key);
-    printf("value1: %s\n", value1);
-    printf("N_value2: %d\n", *N_value2);
-    printf("value3.x: %d\n", value3->x);
-    printf("value3.y: %d\n", value3->y);
+    printf("\nDatos de la clave %d recuperados:\n", key);
+    printf("\tvalue1: %s\n", value1);
+    printf("\tN_value2: %d\n", *N_value2);
+    for (int i = 0; i < *N_value2; i++){
+        printf("\tvalue2[%d]: %f\n", i, V_value2[i]);
+    }
+    printf("\tvalue3.x: %d\n", value3->x);
+    printf("\tvalue3.y: %d\n", value3->y);
     
     return 0;
 }
@@ -356,7 +359,7 @@ int modify_value(int key, char *value1, int N_value2, double *V_value2, struct C
     peticion.operacion = 3;
 
     if (tratar_peticion(&peticion) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: modify_value\nError: Error al modificar");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: modify_value\nError: Error al modificar");
         return -1;
     }
 
@@ -374,7 +377,7 @@ int delete_key(int key){
     peticion.operacion = 4;
     
     if (tratar_peticion(&peticion) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: delete_key\nError: Error al borrar");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: delete_key\nError: Error al borrar");
         return -1;
     }
 
@@ -392,7 +395,7 @@ int exist(int key){
     peticion.operacion = 5; 
 
     if (tratar_peticion(&peticion) == -1){
-        perror("ERROR:\nFile: proxy-mq.c\nFunction: exist\nError: Error al comprobar existencia");
+        perror("ERROR:\nFile: proxy-sock.c\nFunction: exist\nError: Error al comprobar existencia");
         return -1;
     }
 
