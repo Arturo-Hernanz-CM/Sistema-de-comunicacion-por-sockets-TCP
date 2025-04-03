@@ -237,7 +237,7 @@ int tratar_peticion(Peticion * peticion) {
 	}
 
     // Enviar datos al servidor
-    printf("Enviando peticion.\n");
+    printf("\nEnviando peticion.\n");
     if (enviar_peticion(socket_cliente_descriptor, peticion) == -1){
         perror("ERROR:\nFile: proxy-sock.c\nFunction: tratar_peticion\nError: Error al enviar la peticion\n");
         close(socket_cliente_descriptor);
